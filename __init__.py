@@ -7,8 +7,11 @@ def make_cdict1(children,parents):
     order = n.argsort(parents)
     uparents = n.unique(parents)
     indices = n.searchsorted(parents[order],uparents)
+    
     for i in range(len(indices)-1):
         c_dict[uparents[i]] = children[indices[i]:indices[i+1]]
+    i = len(indices) - 1
+    c_dict[uparents[i]] = children[indices[i]:None]
     return c_dict
 
 def make_cdict2(children,parents):
@@ -37,17 +40,21 @@ def process(children,parents,ydata):
     xmax_array = []
     hparents = []
     def expand(index):
+        #ci = n.searchsorted(children,index) # where this index would go in children array
         if index not in c_dict:
             # index is not a parent
             counter[0] += 1
             xi = 1*counter[0]
+            #x_array[ci] = xi
         else:
             xs = [expand(child) for child in c_dict[index]]
             xmin_array.append(n.min(xs))
             xmax_array.append(n.max(xs))
             hparents.append(index)
             xi = n.mean(xs)
-        x_array[n.searchsorted(children,index)] = xi
+            #x_array[ci] = xi
+        x_dict[index] = xi
+
         return xi
 
     # make a call to expand the highest index
@@ -56,6 +63,9 @@ def process(children,parents,ydata):
     for ancestor in ancestors:
         expand(ancestor)
 
+    for i in range(len(children)):
+        x_array[i] = x_dict[children[i]]
+        
     hparents = n.array(hparents)
     xmin_array = n.array(xmin_array)
     xmax_array = n.array(xmax_array)
